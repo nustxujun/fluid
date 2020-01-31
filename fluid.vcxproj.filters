@@ -1,0 +1,118 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="资源文件">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="engine">
+      <UniqueIdentifier>{e5b565bf-20e2-4a36-ac85-0a36c542b0c8}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="engine\Common.h">
+      <Filter>engine</Filter>
+    </ClInclude>
+    <ClInclude Include="engine\D3D12Downlevel.h">
+      <Filter>engine</Filter>
+    </ClInclude>
+    <ClInclude Include="engine\D3DHelper.h">
+      <Filter>engine</Filter>
+    </ClInclude>
+    <ClInclude Include="engine\DefaultFrame.h">
+      <Filter>engine</Filter>
+    </ClInclude>
+    <ClInclude Include="engine\Framework.h">
+      <Filter>engine</Filter>
+    </ClInclude>
+    <ClInclude Include="engine\imgui\imconfig.h">
+      <Filter>engine</Filter>
+    </ClInclude>
+    <ClInclude Include="engine\imgui\imgui.h">
+      <Filter>engine</Filter>
+    </ClInclude>
+    <ClInclude Include="engine\imgui\imgui_internal.h">
+      <Filter>engine</Filter>
+    </ClInclude>
+    <ClInclude Include="engine\imgui\imstb_rectpack.h">
+      <Filter>engine</Filter>
+    </ClInclude>
+    <ClInclude Include="engine\imgui\imstb_textedit.h">
+      <Filter>engine</Filter>
+    </ClInclude>
+    <ClInclude Include="engine\imgui\imstb_truetype.h">
+      <Filter>engine</Filter>
+    </ClInclude>
+    <ClInclude Include="engine\ImguiOverlay.h">
+      <Filter>engine</Filter>
+    </ClInclude>
+    <ClInclude Include="engine\Pipeline.h">
+      <Filter>engine</Filter>
+    </ClInclude>
+    <ClInclude Include="engine\Quad.h">
+      <Filter>engine</Filter>
+    </ClInclude>
+    <ClInclude Include="engine\RenderCommand.h">
+      <Filter>engine</Filter>
+    </ClInclude>
+    <ClInclude Include="engine\RenderContext.h">
+      <Filter>engine</Filter>
+    </ClInclude>
+    <ClInclude Include="engine\Renderer.h">
+      <Filter>engine</Filter>
+    </ClInclude>
+    <ClInclude Include="engine\RenderGraph.h">
+      <Filter>engine</Filter>
+    </ClInclude>
+    <ClInclude Include="engine\SimpleIPC.h">
+      <Filter>engine</Filter>
+    </ClInclude>
+    <ClInclude Include="engine\stb_image.h">
+      <Filter>engine</Filter>
+    </ClInclude>
+    <ClInclude Include="fluid.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="engine\Framework.cpp">
+      <Filter>engine</Filter>
+    </ClCompile>
+    <ClCompile Include="engine\imgui\imgui.cpp">
+      <Filter>engine</Filter>
+    </ClCompile>
+    <ClCompile Include="engine\imgui\imgui_demo.cpp">
+      <Filter>engine</Filter>
+    </ClCompile>
+    <ClCompile Include="engine\imgui\imgui_draw.cpp">
+      <Filter>engine</Filter>
+    </ClCompile>
+    <ClCompile Include="engine\imgui\imgui_widgets.cpp">
+      <Filter>engine</Filter>
+    </ClCompile>
+    <ClCompile Include="engine\ImguiOverlay.cpp">
+      <Filter>engine</Filter>
+    </ClCompile>
+    <ClCompile Include="engine\Pipeline.cpp">
+      <Filter>engine</Filter>
+    </ClCompile>
+    <ClCompile Include="engine\Quad.cpp">
+      <Filter>engine</Filter>
+    </ClCompile>
+    <ClCompile Include="engine\RenderCommand.cpp">
+      <Filter>engine</Filter>
+    </ClCompile>
+    <ClCompile Include="engine\RenderContext.cpp">
+      <Filter>engine</Filter>
+    </ClCompile>
+    <ClCompile Include="engine\Renderer.cpp">
+      <Filter>engine</Filter>
+    </ClCompile>
+    <ClCompile Include="engine\RenderGraph.cpp">
+      <Filter>engine</Filter>
+    </ClCompile>
+    <ClCompile Include="engine\SimpleIPC.cpp">
+      <Filter>engine</Filter>
+    </ClCompile>
+    <ClCompile Include="fluid.cpp" />
+    <ClCompile Include="main.cpp" />
+  </ItemGroup>
+</Project>
