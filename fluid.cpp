@@ -11,8 +11,7 @@ FluidSimulator::FluidSimulator()
 		 ImGui::SliderInt("diffusion", &settings.diffusionIteraionCount,0,100);
 		 ImGui::SliderFloat("viscosity", &settings.viscosity, 0.0001f, 1.0f, "%.5f");
 		 ImGui::SliderInt("pressure", &settings.pressureIterationCount, 0, 100);
-		 ImGui::SliderFloat("force intensity", &settings.force, 0.0f, 500.0f);
-		 ImGui::SliderInt("force count", &settings.count,1,100);
+		 ImGui::SliderFloat("intensity", &settings.intensity, 0.0f, 500.0f);
 
 		 ImGui::SliderFloat("barrier radius", &settings.radius, 1.0f, 300.0f);
 
@@ -29,21 +28,36 @@ FluidSimulator::FluidSimulator()
 		{
 			parent->flags |= ImGuiWindowFlags_NoMove;
 			ImGuiIO& io = ImGui::GetIO();
-			static bool inPressed = false;
-			if (ImGui::IsMouseDown(0) && !inPressed)
-			{
-				inPressed = true;
-			}
-			else if (ImGui::IsMouseReleased(0))
-			{
-				inPressed = false;
-			}
+			const int btncount = 3;
+			static bool inPressed[btncount] = {};
 
-			if (inPressed)
+			for (int i = 0 ; i < btncount; ++i)
+				inPressed[i] = ImGui::IsMouseDown(i);
+
+			auto pos = ImGui::GetItemRectMin();
+			pos = { io.MousePos.x - pos.x, io.MousePos.y - pos.y };
+			if (inPressed[2])
 			{
-				auto pos = ImGui::GetItemRectMin();
-				settings.barrierPos = { io.MousePos.x - pos.x, io.MousePos.y - pos.y };
+				settings.barrierPos = {  pos.x,  pos.y };
 			}
+			if (inPressed[0])
+			{
+				settings.forcePos = { pos.x, pos.y };
+				settings.forceDir = {io.MouseDelta.x,io.MouseDelta.y};
+				settings.color = {50,0};
+			}
+			else if (inPressed[1])
+			{
+				settings.forcePos = { pos.x, pos.y };
+				settings.forceDir = { (pos.x - settings.barrierPos[0]) * -0.05f, (pos.y - settings.barrierPos[1]) * -0.05f };
+				settings.color = {0,50 };
+			}
+			else
+			{
+				settings.forcePos = { };
+				settings.forceDir = {};
+			}
+			
 		}
 		else
 		{
@@ -88,6 +102,11 @@ FluidSimulator::FluidSimulator()
 		//barrier
 		rs.setRenderTargetFormat({ DXGI_FORMAT_R8G8B8A8_UNORM });
 		mQuads[6].init("draw_barrier.hlsl",rs);
+		// init field
+		rs.setRenderTargetFormat({ DXGI_FORMAT_R16G16B16A16_FLOAT });
+		mQuads[7].init("init_field.hlsl", rs);
+
+
 		for (auto& q: mQuads)
 			q.setRect({0,0,(LONG)w ,(LONG)h});
 	}
@@ -116,6 +135,9 @@ void FluidSimulator::execute()
 	mDeltaTime = (float)delta / 1000.0f;
 	last = cur;
 
+
+	initField();
+
 	barrier();
 
 	// advection
@@ -142,6 +164,47 @@ void FluidSimulator::execute()
 	mProfile->end();
 }
 
+void FluidSimulator::initField()
+{
+	auto renderer = Renderer::getSingleton();
+	auto cmdlist = renderer->getCommandList();
+	if ((mSettings.forcePos[0] != 0.0f || mSettings.forcePos[1] != 0.0f))
+	{
+		auto& src = mRenderTargets[Velocity_SRC];
+		auto& dst = mRenderTargets[Velocity_DST];
+
+		auto& init = mQuads[7];
+		init.setVariable("force", mSettings.forceDir);
+		init.setVariable("pos", mSettings.forcePos);
+		init.setVariable("intensity", mSettings.intensity * 10.0f);
+		init.setVariable("deltaTime", mDeltaTime);
+		init.setVariable("color", mSettings.color);
+
+
+
+
+		cmdlist->transitionBarrier(src->getView()->getTexture(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+		cmdlist->transitionBarrier(dst->getView()->getTexture(), D3D12_RESOURCE_STATE_RENDER_TARGET, 0, true);
+		cmdlist->setRenderTarget(dst->getView());
+		init.setResource("field", src->getView()->getTexture()->getShaderResource());
+		RenderContext::getSingleton()->renderScreen(&init);
+
+		std::swap(src, dst);
+	}
+	else if (mSettings.reset)
+	{
+		auto& srcV = mRenderTargets[Velocity_SRC];
+		auto& srcP = mRenderTargets[Pressure_SRC];
+		cmdlist->transitionBarrier(srcV->getView()->getTexture(), D3D12_RESOURCE_STATE_RENDER_TARGET);
+		cmdlist->transitionBarrier(srcP->getView()->getTexture(), D3D12_RESOURCE_STATE_RENDER_TARGET, 0, true);
+		cmdlist->clearRenderTarget(srcV->getView(), mSettings.clearValue);
+		cmdlist->clearRenderTarget(srcP->getView(), {});
+
+	}
+
+
+}
+
 void FluidSimulator::advect( )
 {
 	auto& src = mRenderTargets[Velocity_SRC];
@@ -160,23 +223,15 @@ void FluidSimulator::advect( )
 	cmdlist->transitionBarrier(dst->getView()->getTexture(), D3D12_RESOURCE_STATE_RENDER_TARGET, 0, true);
 
 
-	if (mSettings.reset)
-	{
-		//advect.setResource("V",mInitial->getShaderResource());
 
-		cmdlist->clearRenderTarget(dst->getView(),mSettings.clearValue);
-	}
-	else
 	{
 		advect.setResource("V",src->getView()->getTexture()->getShaderResource());
 		advect.setResource("Barrier", barrier->getView()->getTexture()->getShaderResource());
 
 		advect.setVariable("texelSize", mTexelSize);
 		advect.setVariable("deltaTime", mDeltaTime);
-		advect.setVariable("force", mSettings.force);
-		advect.setVariable("count", mSettings.count);
+		advect.setVariable("intensity", mSettings.intensity);
 
-		
 
 		cmdlist->setRenderTarget(dst->getView());
 
@@ -197,7 +252,6 @@ void FluidSimulator::diffuse(UINT iterCount)
 
 	auto& jacobi = mQuads[1];
 
-	//float alpha = (mTexelSize[0] * mTexelSize[1]) /(mViscosity * mDeltaTime);
 	float alpha = 1.0f / (mSettings.viscosity * mDeltaTime);
 	float beta = 4 + alpha;
 
@@ -238,7 +292,7 @@ void FluidSimulator::divergence()
 	cmdlist->setRenderTarget(rt->getView());
 
 	Vector2 half = { mTexelSize[0] * 0.5f, mTexelSize[1] * 0.5f };
-	div.setVariable("halfTexelSize", half);
+	//div.setVariable("halfTexelSize", half);
 	div.setResource("V", vel->getView()->getTexture()->getShaderResource());
 	div.setResource("Barrier", barrier->getView()->getTexture()->getShaderResource());
 
@@ -269,11 +323,6 @@ void FluidSimulator::pressure(UINT iterCount)
 	cmdlist->transitionBarrier(div->getView()->getTexture(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 	jacobi.setResource("B", div->getView()->getTexture()->getShaderResource());
 
-	if (mSettings.reset)
-	{
-		cmdlist->transitionBarrier(dstP->getView()->getTexture(), D3D12_RESOURCE_STATE_RENDER_TARGET, 0, true);
-		cmdlist->clearRenderTarget(dstP->getView(),{});
-	}
 
 	for (UINT i = 0; i < iterCount; ++i)
 	{
@@ -298,7 +347,7 @@ void FluidSimulator::pressure(UINT iterCount)
 	subgrad.setResource("V", srcV->getView()->getTexture()->getShaderResource());
 	subgrad.setResource("P", srcP->getView()->getTexture()->getShaderResource());
 	Vector2 half = { mTexelSize[0] * 0.5f, mTexelSize[1] * 0.5f };
-	subgrad.setVariable("halfTexelSize", half);
+	//subgrad.setVariable("halfTexelSize", half);
 	RenderContext::getSingleton()->renderScreen(&subgrad);
 	std::swap(srcV, dstV);
 }
@@ -316,10 +365,10 @@ void FluidSimulator::visualize()
 	cmdlist->transitionBarrier(barrier->getView()->getTexture(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 	cmdlist->transitionBarrier(field->getView()->getTexture(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,0,true);
 	cmdlist->setRenderTarget(visualrt->getView());
-	visual.setVariable("add",0.5f);
-	visual.setVariable("scale", 0.5f);
-	visual.setVariable("clampMin", -1.0f);
-	visual.setVariable("clampMax", 1.0f);
+	//visual.setVariable("add",0.5f);
+	//visual.setVariable("scale", 0.5f);
+	//visual.setVariable("clampMin", -1.0f);
+	//visual.setVariable("clampMax", 1.0f);
 
 	visual.setResource("field", field->getView()->getTexture()->getShaderResource());
 	visual.setResource("barrier", barrier->getView()->getTexture()->getShaderResource());

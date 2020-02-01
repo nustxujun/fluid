@@ -24,6 +24,7 @@ public:
 	void execute();
 
 private:
+	void initField();
 	void advect();
 	void diffuse(UINT iterCount);
 	void divergence();
@@ -31,7 +32,7 @@ private:
 	void visualize();
 	void barrier();
 private:
-	std::array<Quad, 7> mQuads;
+	std::array<Quad, 8> mQuads;
 	std::array<ResourceHandle::Ptr, NUM_RTS> mRenderTargets;
 	ImGuiOverlay::ImGuiObject* mShow;
 	ImGuiOverlay::ImGuiObject* mImage;
@@ -45,12 +46,15 @@ private:
 		int diffusionIteraionCount = 10;
 		int pressureIterationCount = 50;
 		float viscosity = 0.01f;
-		float force = 100.0f;
-		int count = 10;
+		float intensity = 100.0f;
 		bool reset = true;
 		Color clearValue = {};
-		Vector2 barrierPos = {};
+		Vector2 barrierPos = {300,150};
 		float radius = 10.0f;
+		Vector2 forcePos = {};
+		Vector2 forceDir = {};
+		Vector2 color = {};
+
 	} mSettings;
 
 };
