@@ -8,19 +8,24 @@ sampler pointSampler: register(s1);
 
 cbuffer Batch
 {
-	float add;
-	float scale;
-	float clampMin;
-	float clampMax;
+	bool velocity;
 };
 
 half4 ps(QuadInput input):SV_Target
 {
 	half4 d = field.Sample(pointSampler, input.uv);
-	d = (clamp(d  , -1, 1)) * 0.5 + 0.5  ;
 	half4 b = barrier.Sample(pointSampler, input.uv);
-	return half4(d.zw,b.x + 0.5f,1);
-	//return half4(d.xy , b.x + 0.5f,1);
+	if (!velocity)
+	{
+		d = (clamp(d  , -1, 1)) * 0.5 + 0.5  ;
+		return half4(d.zw,b.x + 0.5f,1);
+	}
+	else
+	{
+		d = (clamp(d  * 0.01f, -1, 1)) * 0.5 + 0.5  ;
+		return half4(d.xy  , b.x + 0.5f,1);
+	}
+
 }
 
 

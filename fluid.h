@@ -1,6 +1,8 @@
 #include "engine/RenderGraph.h"
 #include "engine/Quad.h"
 #include "engine/ImguiOverlay.h"
+#include <chrono> 
+
 class FluidSimulator final: public RenderGraph::RenderPass
 {
 	enum
@@ -39,7 +41,9 @@ private:
 	ImGuiOverlay::ImGuiObject* mPanel;
 	Renderer::Profile::Ref mProfile;
 
-	float mDeltaTime = 0.01f;
+	float mDeltaTime;
+	std::chrono::high_resolution_clock::time_point mTimePoint;
+
 	Vector2 mTexelSize;
 	struct Settings
 	{
@@ -54,7 +58,7 @@ private:
 		Vector2 forcePos = {};
 		Vector2 forceDir = {};
 		Vector2 color = {};
-
+		bool velocityVisualization = false;
 	} mSettings;
 
 };

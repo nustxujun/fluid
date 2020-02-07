@@ -17,6 +17,8 @@ public:
 	}
 	void update() override
 	{
+
+
 		RenderGraph graph;
 		graph.begin() >> mFluidPass >> mGui >> mPresent;
 
@@ -24,6 +26,8 @@ public:
 		graph.compile();
 		graph.execute();
 	}
+
+private:
 };
 
 

@@ -9,15 +9,15 @@ FluidSimulator::FluidSimulator()
 		 ImGui::Text("cpu: %.3f ms, gpu: %.3f ms", profile->getCPUTime(), profile->getGPUTime());
 		 
 		 ImGui::SliderInt("diffusion", &settings.diffusionIteraionCount,0,100);
-		 ImGui::SliderFloat("viscosity", &settings.viscosity, 0.0001f, 1.0f, "%.5f");
+		 ImGui::SliderFloat("viscosity", &settings.viscosity, 0.0001f, 100.0f, "%.5f");
 		 ImGui::SliderInt("pressure", &settings.pressureIterationCount, 0, 100);
 		 ImGui::SliderFloat("intensity", &settings.intensity, 0.0f, 500.0f);
 
 		 ImGui::SliderFloat("barrier radius", &settings.radius, 1.0f, 300.0f);
 
-		 settings.reset = ImGui::Button("clear");
+		 settings.reset = settings.reset || ImGui::Button("clear");
 		 ImGui::DragFloat4("value", settings.clearValue.data(),10.0f,-500.0f,500.0f,"%.1f");
-
+		 ImGui::Checkbox("velocity field",&settings.velocityVisualization );
 		 return true;
 	};
 	mShow = ImGuiOverlay::ImGuiObject::root()->createChild<ImGuiOverlay::ImGuiWindow>("fluid");
@@ -36,20 +36,36 @@ FluidSimulator::FluidSimulator()
 
 			auto pos = ImGui::GetItemRectMin();
 			pos = { io.MousePos.x - pos.x, io.MousePos.y - pos.y };
+
+			auto toVec = [](float x, float y, float len)
+			{
+				if (x != 0 || y != 0)
+				{
+					float c = std::sqrt(std::pow(x, 2) + std::pow(y, 2));
+					c = len / c;
+					x *= c;
+					y *= c;
+				}
+				return Vector2{x,y};
+			};
 			if (inPressed[2])
 			{
 				settings.barrierPos = {  pos.x,  pos.y };
 			}
 			if (inPressed[0])
 			{
+				static ImVec2 lastpos = pos;
+
 				settings.forcePos = { pos.x, pos.y };
-				settings.forceDir = {io.MouseDelta.x,io.MouseDelta.y};
+
+				settings.forceDir =  toVec(io.MouseDelta.x, io.MouseDelta.y, 50.0f);
+				lastpos = pos;
 				settings.color = {50,0};
 			}
 			else if (inPressed[1])
 			{
 				settings.forcePos = { pos.x, pos.y };
-				settings.forceDir = { (pos.x - settings.barrierPos[0]) * -0.05f, (pos.y - settings.barrierPos[1]) * -0.05f };
+				settings.forceDir = toVec( settings.barrierPos[0] - pos.x, settings.barrierPos[1] - pos.y,10.0f);
 				settings.color = {0,50 };
 			}
 			else
@@ -70,8 +86,8 @@ FluidSimulator::FluidSimulator()
 	auto renderer = Renderer::getSingleton();
 	mProfile = renderer->createProfile();
 
-	UINT w = 640;
-	UINT h = 360;
+	UINT w = 1024;
+	UINT h = 576;
 	mTexelSize = { 1.0f / w, 1.0f / w };
 	for (UINT i = 0; i < 2; ++i)
 		mRenderTargets[i] = ResourceHandle::create(Renderer::VT_RENDERTARGET, (UINT)w, (UINT)h, DXGI_FORMAT_R16G16B16A16_FLOAT);
@@ -110,6 +126,9 @@ FluidSimulator::FluidSimulator()
 		for (auto& q: mQuads)
 			q.setRect({0,0,(LONG)w ,(LONG)h});
 	}
+
+	mTimePoint = std::chrono::high_resolution_clock::now();
+	mDeltaTime = 0.01f;
 }
 
 void FluidSimulator::setup()
@@ -124,17 +143,14 @@ void FluidSimulator::compile(const RenderGraph::Inputs& inputs)
 void FluidSimulator::execute()
 {
 	mProfile->begin();
-	static auto last = ::GetTickCount();
-	auto cur = ::GetTickCount();
-	auto delta = cur - last;
-	if (delta <= 0)
-	{
-		mProfile->end();
-		return;
-	}
-	mDeltaTime = (float)delta / 1000.0f;
-	last = cur;
+	
+	auto point = std::chrono::high_resolution_clock::now();
 
+
+
+	mDeltaTime = (float)(point - mTimePoint).count() / 1000000000.0;
+
+	mTimePoint = point;
 
 	initField();
 
@@ -160,8 +176,8 @@ void FluidSimulator::execute()
 	auto cmdlist = renderer->getCommandList();
 	cmdlist->transitionBarrier(src->getView()->getTexture(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,0, true);
 	((ImGuiOverlay::ImGuiImage*)mImage)->texture = src->getView()->getTexture();
-
 	mProfile->end();
+
 }
 
 void FluidSimulator::initField()
@@ -177,7 +193,7 @@ void FluidSimulator::initField()
 		init.setVariable("force", mSettings.forceDir);
 		init.setVariable("pos", mSettings.forcePos);
 		init.setVariable("intensity", mSettings.intensity * 10.0f);
-		init.setVariable("deltaTime", mDeltaTime);
+		init.setVariable("deltaTime", (float)mDeltaTime);
 		init.setVariable("color", mSettings.color);
 
 
@@ -199,7 +215,7 @@ void FluidSimulator::initField()
 		cmdlist->transitionBarrier(srcP->getView()->getTexture(), D3D12_RESOURCE_STATE_RENDER_TARGET, 0, true);
 		cmdlist->clearRenderTarget(srcV->getView(), mSettings.clearValue);
 		cmdlist->clearRenderTarget(srcP->getView(), {});
-
+		mSettings.reset = false;
 	}
 
 
@@ -229,7 +245,7 @@ void FluidSimulator::advect( )
 		advect.setResource("Barrier", barrier->getView()->getTexture()->getShaderResource());
 
 		advect.setVariable("texelSize", mTexelSize);
-		advect.setVariable("deltaTime", mDeltaTime);
+		advect.setVariable("deltaTime", (float)mDeltaTime);
 		advect.setVariable("intensity", mSettings.intensity);
 
 
@@ -252,7 +268,7 @@ void FluidSimulator::diffuse(UINT iterCount)
 
 	auto& jacobi = mQuads[1];
 
-	float alpha = 1.0f / (mSettings.viscosity * mDeltaTime);
+	float alpha = 1.0f / std::max (float(mSettings.viscosity * mDeltaTime), FLT_MIN);
 	float beta = 4 + alpha;
 
 	jacobi.setVariable("alpha", alpha);
@@ -365,10 +381,8 @@ void FluidSimulator::visualize()
 	cmdlist->transitionBarrier(barrier->getView()->getTexture(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 	cmdlist->transitionBarrier(field->getView()->getTexture(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,0,true);
 	cmdlist->setRenderTarget(visualrt->getView());
-	//visual.setVariable("add",0.5f);
-	//visual.setVariable("scale", 0.5f);
-	//visual.setVariable("clampMin", -1.0f);
-	//visual.setVariable("clampMax", 1.0f);
+	visual.setVariable("velocity", mSettings.velocityVisualization);
+
 
 	visual.setResource("field", field->getView()->getTexture()->getShaderResource());
 	visual.setResource("barrier", barrier->getView()->getTexture()->getShaderResource());

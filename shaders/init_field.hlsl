@@ -16,13 +16,16 @@ half4 ps(QuadInput input) :SV_Target
 {
 	half4 c = field.SampleLevel(pointSampler, input.uv, 0);
 	float2 deltapos = pos - input.position.xy;
-	if (dot(deltapos, deltapos) < 25)
+	if (dot(deltapos, deltapos) < 100)
 	{
 		//c.xy += -deltapos * intensity * deltaTime;
 		c.xy += force * intensity * deltaTime;
 		//c.xy = half2(100,0) * intensity;
 		c.zw += color * deltaTime;
 	}
+
+
+
 	return c;
 }
 
