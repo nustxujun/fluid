@@ -4,9 +4,12 @@
 #include "engine/Pipeline.h"
 #include "fluid.h"
 
+#include "grass.h"
+
 class FluidPipeline final :public DefaultPipeline
 {
 	FluidSimulator mFluidPass;
+	GrassPass mGrassPass;
 public:
 	FluidPipeline()
 	{
@@ -20,7 +23,7 @@ public:
 
 
 		RenderGraph graph;
-		graph.begin() >> mFluidPass >> mGui >> mPresent;
+		graph.begin() >> mFluidPass >> mGrassPass >> mGui >> mPresent;
 
 		graph.setup();
 		graph.compile();
@@ -37,6 +40,7 @@ public:
 	void init()
 	{
 		DefaultFrame::init(false);
+
 		Renderer::getSingleton()->addSearchPath("shaders/");
 		pipeline.reset();
 		pipeline = decltype(pipeline)(new FluidPipeline);

@@ -160,6 +160,7 @@
     <ClInclude Include="engine\SimpleIPC.h" />
     <ClInclude Include="engine\stb_image.h" />
     <ClInclude Include="fluid.h" />
+    <ClInclude Include="grass.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="engine\Framework.cpp" />
@@ -176,6 +177,7 @@
     <ClCompile Include="engine\RenderGraph.cpp" />
     <ClCompile Include="engine\SimpleIPC.cpp" />
     <ClCompile Include="fluid.cpp" />
+    <ClCompile Include="grass.cpp" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

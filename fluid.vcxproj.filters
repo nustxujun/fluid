@@ -71,6 +71,7 @@
       <Filter>engine</Filter>
     </ClInclude>
     <ClInclude Include="fluid.h" />
+    <ClInclude Include="grass.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="engine\Framework.cpp">
@@ -114,5 +115,6 @@
     </ClCompile>
     <ClCompile Include="fluid.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="grass.cpp" />
   </ItemGroup>
 </Project>

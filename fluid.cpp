@@ -17,7 +17,7 @@ FluidSimulator::FluidSimulator()
 
 		 settings.reset = settings.reset || ImGui::Button("clear");
 		 ImGui::DragFloat4("value", settings.clearValue.data(),10.0f,-500.0f,500.0f,"%.1f");
-		 ImGui::Checkbox("velocity field",&settings.velocityVisualization );
+		 ImGui::Checkbox("velocity",&settings.velocityVisualization );
 		 return true;
 	};
 	mShow = ImGuiOverlay::ImGuiObject::root()->createChild<ImGuiOverlay::ImGuiWindow>("fluid");
@@ -137,7 +137,8 @@ void FluidSimulator::setup()
 
 void FluidSimulator::compile(const RenderGraph::Inputs& inputs)
 {
-	write(inputs[0]->getRenderTarget(0),IT_NOUSE);
+	write(inputs[0]->getRenderTarget(0),IT_NOUSE,0);
+	write(mRenderTargets[Velocity_SRC], IT_NOUSE,1);
 }
 
 void FluidSimulator::execute()
