@@ -175,8 +175,8 @@ void FluidSimulator::execute()
 
 	auto renderer = Renderer::getSingleton();
 	auto cmdlist = renderer->getCommandList();
-	cmdlist->transitionBarrier(src->getView()->getTexture(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,0, true);
-	((ImGuiOverlay::ImGuiImage*)mImage)->texture = src->getView()->getTexture();
+	cmdlist->transitionBarrier(src->getView(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,0, true);
+	((ImGuiOverlay::ImGuiImage*)mImage)->texture = src->getView();
 	mProfile->end();
 
 }
@@ -200,10 +200,10 @@ void FluidSimulator::initField()
 
 
 
-		cmdlist->transitionBarrier(src->getView()->getTexture(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
-		cmdlist->transitionBarrier(dst->getView()->getTexture(), D3D12_RESOURCE_STATE_RENDER_TARGET, 0, true);
+		cmdlist->transitionBarrier(src->getView(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+		cmdlist->transitionBarrier(dst->getView(), D3D12_RESOURCE_STATE_RENDER_TARGET, 0, true);
 		cmdlist->setRenderTarget(dst->getView());
-		init.setResource("field", src->getView()->getTexture()->getShaderResource());
+		init.setResource("field", src->getView()->getShaderResource());
 		RenderContext::getSingleton()->renderScreen(&init);
 
 		std::swap(src, dst);
@@ -212,8 +212,8 @@ void FluidSimulator::initField()
 	{
 		auto& srcV = mRenderTargets[Velocity_SRC];
 		auto& srcP = mRenderTargets[Pressure_SRC];
-		cmdlist->transitionBarrier(srcV->getView()->getTexture(), D3D12_RESOURCE_STATE_RENDER_TARGET);
-		cmdlist->transitionBarrier(srcP->getView()->getTexture(), D3D12_RESOURCE_STATE_RENDER_TARGET, 0, true);
+		cmdlist->transitionBarrier(srcV->getView(), D3D12_RESOURCE_STATE_RENDER_TARGET);
+		cmdlist->transitionBarrier(srcP->getView(), D3D12_RESOURCE_STATE_RENDER_TARGET, 0, true);
 		cmdlist->clearRenderTarget(srcV->getView(), mSettings.clearValue);
 		cmdlist->clearRenderTarget(srcP->getView(), {});
 		mSettings.reset = false;
@@ -234,16 +234,16 @@ void FluidSimulator::advect( )
 	auto renderer = Renderer::getSingleton();
 	auto cmdlist = renderer->getCommandList();
 
-	cmdlist->transitionBarrier(src->getView()->getTexture(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
-	cmdlist->transitionBarrier(barrier->getView()->getTexture(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+	cmdlist->transitionBarrier(src->getView(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+	cmdlist->transitionBarrier(barrier->getView(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
-	cmdlist->transitionBarrier(dst->getView()->getTexture(), D3D12_RESOURCE_STATE_RENDER_TARGET, 0, true);
+	cmdlist->transitionBarrier(dst->getView(), D3D12_RESOURCE_STATE_RENDER_TARGET, 0, true);
 
 
 
 	{
-		advect.setResource("V",src->getView()->getTexture()->getShaderResource());
-		advect.setResource("Barrier", barrier->getView()->getTexture()->getShaderResource());
+		advect.setResource("V",src->getView()->getShaderResource());
+		advect.setResource("Barrier", barrier->getView()->getShaderResource());
 
 		advect.setVariable("texelSize", mTexelSize);
 		advect.setVariable("deltaTime", (float)mDeltaTime);
@@ -279,12 +279,12 @@ void FluidSimulator::diffuse(UINT iterCount)
 	auto cmdlist = renderer->getCommandList();
 	for (UINT i = 0; i < iterCount; ++i)
 	{
-		cmdlist->transitionBarrier(src->getView()->getTexture(),D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
-		cmdlist->transitionBarrier(dst->getView()->getTexture(), D3D12_RESOURCE_STATE_RENDER_TARGET,0,true);
+		cmdlist->transitionBarrier(src->getView(),D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+		cmdlist->transitionBarrier(dst->getView(), D3D12_RESOURCE_STATE_RENDER_TARGET,0,true);
 
 		
-		jacobi.setResource("X",src->getView()->getTexture()->getShaderResource());
-		jacobi.setResource("B", src->getView()->getTexture()->getShaderResource());
+		jacobi.setResource("X",src->getView()->getShaderResource());
+		jacobi.setResource("B", src->getView()->getShaderResource());
 
 		cmdlist->setRenderTarget(dst->getView());
 		RenderContext::getSingleton()->renderScreen(&jacobi);
@@ -296,22 +296,22 @@ void FluidSimulator::diffuse(UINT iterCount)
 void FluidSimulator::divergence()
 {
 	auto vel = mRenderTargets[Velocity_SRC];
-	auto& desc = vel->getView()->getTexture()->getDesc();
+	auto& desc = vel->getView()->getDesc();
 	auto rt = mRenderTargets[Divergence];
 	auto barrier = mRenderTargets[Barrier];
 	auto& div = mQuads[2];
 
 	auto renderer = Renderer::getSingleton();
 	auto cmdlist = renderer->getCommandList();
-	cmdlist->transitionBarrier(rt->getView()->getTexture(), D3D12_RESOURCE_STATE_RENDER_TARGET);
-	cmdlist->transitionBarrier(barrier->getView()->getTexture(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
-	cmdlist->transitionBarrier(vel->getView()->getTexture(),D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,0,true);
+	cmdlist->transitionBarrier(rt->getView(), D3D12_RESOURCE_STATE_RENDER_TARGET);
+	cmdlist->transitionBarrier(barrier->getView(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+	cmdlist->transitionBarrier(vel->getView(),D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,0,true);
 	cmdlist->setRenderTarget(rt->getView());
 
 	Vector2 half = { mTexelSize[0] * 0.5f, mTexelSize[1] * 0.5f };
 	//div.setVariable("halfTexelSize", half);
-	div.setResource("V", vel->getView()->getTexture()->getShaderResource());
-	div.setResource("Barrier", barrier->getView()->getTexture()->getShaderResource());
+	div.setResource("V", vel->getView()->getShaderResource());
+	div.setResource("Barrier", barrier->getView()->getShaderResource());
 
 	RenderContext::getSingleton()->renderScreen(&div);
 }
@@ -337,17 +337,17 @@ void FluidSimulator::pressure(UINT iterCount)
 
 	auto renderer = Renderer::getSingleton();
 	auto cmdlist = renderer->getCommandList();
-	cmdlist->transitionBarrier(div->getView()->getTexture(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
-	jacobi.setResource("B", div->getView()->getTexture()->getShaderResource());
+	cmdlist->transitionBarrier(div->getView(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+	jacobi.setResource("B", div->getView()->getShaderResource());
 
 
 	for (UINT i = 0; i < iterCount; ++i)
 	{
-		cmdlist->transitionBarrier(srcP->getView()->getTexture(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
-		cmdlist->transitionBarrier(dstP->getView()->getTexture(), D3D12_RESOURCE_STATE_RENDER_TARGET, 0, true);
+		cmdlist->transitionBarrier(srcP->getView(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+		cmdlist->transitionBarrier(dstP->getView(), D3D12_RESOURCE_STATE_RENDER_TARGET, 0, true);
 
 
-		jacobi.setResource("X", srcP->getView()->getTexture()->getShaderResource());
+		jacobi.setResource("X", srcP->getView()->getShaderResource());
 
 		cmdlist->setRenderTarget(dstP->getView());
 		RenderContext::getSingleton()->renderScreen(&jacobi);
@@ -356,13 +356,13 @@ void FluidSimulator::pressure(UINT iterCount)
 
 	auto& subgrad = mQuads[4];
 
-	cmdlist->transitionBarrier(srcV->getView()->getTexture(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
-	cmdlist->transitionBarrier(srcP->getView()->getTexture(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
-	cmdlist->transitionBarrier(dstV->getView()->getTexture(), D3D12_RESOURCE_STATE_RENDER_TARGET,0,true);
+	cmdlist->transitionBarrier(srcV->getView(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+	cmdlist->transitionBarrier(srcP->getView(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+	cmdlist->transitionBarrier(dstV->getView(), D3D12_RESOURCE_STATE_RENDER_TARGET,0,true);
 
 	cmdlist->setRenderTarget(dstV->getView());
-	subgrad.setResource("V", srcV->getView()->getTexture()->getShaderResource());
-	subgrad.setResource("P", srcP->getView()->getTexture()->getShaderResource());
+	subgrad.setResource("V", srcV->getView()->getShaderResource());
+	subgrad.setResource("P", srcP->getView()->getShaderResource());
 	Vector2 half = { mTexelSize[0] * 0.5f, mTexelSize[1] * 0.5f };
 	//subgrad.setVariable("halfTexelSize", half);
 	RenderContext::getSingleton()->renderScreen(&subgrad);
@@ -378,15 +378,15 @@ void FluidSimulator::visualize()
 
 	auto renderer = Renderer::getSingleton();
 	auto cmdlist = renderer->getCommandList();
-	cmdlist->transitionBarrier(visualrt->getView()->getTexture(), D3D12_RESOURCE_STATE_RENDER_TARGET);
-	cmdlist->transitionBarrier(barrier->getView()->getTexture(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
-	cmdlist->transitionBarrier(field->getView()->getTexture(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,0,true);
+	cmdlist->transitionBarrier(visualrt->getView(), D3D12_RESOURCE_STATE_RENDER_TARGET);
+	cmdlist->transitionBarrier(barrier->getView(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+	cmdlist->transitionBarrier(field->getView(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,0,true);
 	cmdlist->setRenderTarget(visualrt->getView());
 	visual.setVariable("velocity", mSettings.velocityVisualization);
 
 
-	visual.setResource("field", field->getView()->getTexture()->getShaderResource());
-	visual.setResource("barrier", barrier->getView()->getTexture()->getShaderResource());
+	visual.setResource("field", field->getView()->getShaderResource());
+	visual.setResource("barrier", barrier->getView()->getShaderResource());
 
 	RenderContext::getSingleton()->renderScreen(&visual);
 
@@ -398,7 +398,7 @@ void FluidSimulator::barrier()
 	auto cmdlist = renderer->getCommandList();
 	auto & b = mRenderTargets[Barrier];
 	auto& db = mQuads[6];
-	cmdlist->transitionBarrier(b->getView()->getTexture(), D3D12_RESOURCE_STATE_RENDER_TARGET, 0, true);
+	cmdlist->transitionBarrier(b->getView(), D3D12_RESOURCE_STATE_RENDER_TARGET, 0, true);
 	cmdlist->setRenderTarget(b->getView());
 	//if (mSettings.reset)
 	//{

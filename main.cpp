@@ -5,11 +5,13 @@
 #include "fluid.h"
 
 #include "grass.h"
+#include "particle.h"
 
 class FluidPipeline final :public DefaultPipeline
 {
 	FluidSimulator mFluidPass;
 	GrassPass mGrassPass;
+	ParticlePass mPartilePass;
 public:
 	FluidPipeline()
 	{
@@ -23,7 +25,7 @@ public:
 
 
 		RenderGraph graph;
-		graph.begin() >> mFluidPass >> mGrassPass >> mGui >> mPresent;
+		graph.begin() >> mFluidPass >> mGrassPass >> mPartilePass >> mGui >> mPresent;
 
 		graph.setup();
 		graph.compile();

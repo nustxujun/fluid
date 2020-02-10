@@ -161,6 +161,7 @@
     <ClInclude Include="engine\stb_image.h" />
     <ClInclude Include="fluid.h" />
     <ClInclude Include="grass.h" />
+    <ClInclude Include="particle.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="engine\Framework.cpp" />
@@ -179,6 +180,7 @@
     <ClCompile Include="fluid.cpp" />
     <ClCompile Include="grass.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="particle.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

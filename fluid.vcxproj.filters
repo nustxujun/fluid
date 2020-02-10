@@ -72,6 +72,7 @@
     </ClInclude>
     <ClInclude Include="fluid.h" />
     <ClInclude Include="grass.h" />
+    <ClInclude Include="particle.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="engine\Framework.cpp">
@@ -116,5 +117,6 @@
     <ClCompile Include="fluid.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="grass.cpp" />
+    <ClCompile Include="particle.cpp" />
   </ItemGroup>
 </Project>

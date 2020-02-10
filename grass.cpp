@@ -46,6 +46,8 @@ void GrassPass::compile(const RenderGraph::Inputs& inputs)
 {
 	read(inputs[0]->getRenderTarget(1));
 	write(inputs[0]->getRenderTarget(0));
+	write(inputs[0]->getRenderTarget(1),IT_NOUSE,1);
+
 }
 
 void GrassPass::execute()
@@ -59,7 +61,7 @@ void GrassPass::execute()
 	auto size = renderer->getSize();
 	cmdlist->setViewport({0,0,(float)size[0],(float)size[1],0,1.0f});
 	cmdlist->setScissorRect({0,0,size[0],size[1]});
-	mPSO->setResource(Renderer::Shader::ST_GEOMETRY,"V", mShaderResources[0]->getView()->getTexture()->getShaderResource());
+	mPSO->setResource(Renderer::Shader::ST_GEOMETRY,"V", mShaderResources[0]->getView()->getShaderResource());
 
 
 
