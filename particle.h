@@ -17,4 +17,6 @@ private:
 	Renderer::PipelineState::Ref mPSO;
 	std::array<Renderer::Resource::Ref ,2> mParticles;
 	Quad mQuad; 
+	bool mVisible = false;
+	ImGuiOverlay::ImGuiObject* mPanel;
 };

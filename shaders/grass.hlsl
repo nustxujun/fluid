@@ -50,7 +50,7 @@ void gs(point GSInput pos[1],inout LineStream<PSInput> output)
 		o.position = float4(last,0,1);
 		o.color = float4(0, float(i) / LENGTH,0,1);
 		output.Append(o);
-		float2 add = vel.xy * 0.001  * (pow(float(i) / LENGTH,2) + 0.1)+ float2(0,scale);
+		float2 add = vel.xy * 0.1f  * (pow(float(i) / LENGTH,2) + 0.1)+ float2(0,scale);
 		add = normalize(add) * scale;
 		last += add;
 		o.position = float4(last, 0, 1);

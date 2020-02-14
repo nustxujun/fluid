@@ -8,11 +8,11 @@ ParticlePass::ParticlePass()
 	mSize = 512;
 	mCount = mSize * mSize;
 
-	//mPanel = ImGuiOverlay::ImGuiObject::root()->createChild<ImGuiOverlay::ImGuiWindow>("grass panel");
-	//mPanel->drawCallback = [&visible = mVisible](auto gui) {
-	//	ImGui::Checkbox("grass", &visible);
-	//	return true;
-	//};
+	mPanel = ImGuiOverlay::ImGuiObject::root()->createChild<ImGuiOverlay::ImGuiWindow>("particle panel");
+	mPanel->drawCallback = [&visible = mVisible](auto gui) {
+		ImGui::Checkbox("particles", &visible);
+		return true;
+	};
 	{
 		auto settings = Renderer::RenderState::Default;
 		settings.setRenderTargetFormat({ DXGI_FORMAT_R32G32B32A32_FLOAT });
@@ -31,7 +31,7 @@ ParticlePass::ParticlePass()
 	std::vector<Vector4> initdata(mCount);
 	for (auto& p : initdata)
 	{
-		p = { float(rand() %1000) / 1000 * 2 - 1,float(rand() % 1000) / 1000 * 2 - 1, 0, 0};
+		p = { float(rand() % mSize) / mSize * 2.0f - 1,float(rand() % mSize) / mSize * 2.0f - 1, 0, 0};
 	}
 	renderer->updateTexture(mParticles[0],0,initdata.data(),sizeof(Vector4) * initdata.size(), false);
 
@@ -73,6 +73,8 @@ void ParticlePass::compile(const RenderGraph::Inputs& inputs)
 
 void ParticlePass::execute()
 {
+	if (!mVisible)
+		return;
 	auto renderer = Renderer::getSingleton();
 	auto cmdlist = renderer->getCommandList();
 	cmdlist->setPipelineState(mPSO);

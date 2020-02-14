@@ -21,7 +21,7 @@ PSInput vs(uint vertexId: SV_VertexID)
 	o.position.y *= -1;
 	o.position.w = 1;
 	float brightness = o.position.z;
-	o.color = float4(brightness,0, brightness,0);
+	o.color = float4(0, brightness * 0.5 + 0.1, brightness+ 0.1,0);
 	return o;
 }
 

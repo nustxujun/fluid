@@ -53,14 +53,9 @@ int main()
 {
 	{
 		Frame frame;
-		try {
-			frame.init();
-			frame.update();
-		}
-		catch (...)
-		{
-			frame.rendercmd.invalid();
-		}
+		frame.init();
+		frame.update();
+	
 	}
 
 	return 0;
