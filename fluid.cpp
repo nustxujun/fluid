@@ -58,7 +58,7 @@ FluidSimulator::FluidSimulator()
 
 				settings.forcePos = { pos.x, pos.y };
 
-				settings.forceDir =  toVec(io.MouseDelta.x, io.MouseDelta.y, 50.0f);
+				settings.forceDir =  toVec(io.MouseDelta.x, io.MouseDelta.y, 5);
 				lastpos = pos;
 				settings.color = {50,0};
 			}
@@ -382,7 +382,7 @@ void FluidSimulator::visualize()
 	cmdlist->transitionBarrier(barrier->getView(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 	cmdlist->transitionBarrier(field->getView(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,0,true);
 	cmdlist->setRenderTarget(visualrt->getView());
-	visual.setVariable("velocity", mSettings.velocityVisualization);
+	visual.setVariable("velocity", (int)mSettings.velocityVisualization);
 
 
 	visual.setResource("field", field->getView()->getShaderResource());

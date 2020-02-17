@@ -8,7 +8,7 @@ sampler pointSampler: register(s1);
 
 cbuffer Batch
 {
-	bool velocity;
+	int velocity;
 };
 
 half4 ps(QuadInput input):SV_Target

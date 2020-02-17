@@ -46,6 +46,7 @@ public:
 		Renderer::getSingleton()->addSearchPath("shaders/");
 		pipeline.reset();
 		pipeline = decltype(pipeline)(new FluidPipeline);
+		Renderer::getSingleton()->setVSync(true);
 	}
 };
 
